@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "baseUrl": "src",
+    "paths": {
+      "@inventory-management/shared": [
+        "../../../packages/shared/src/index.ts"
+      ]
+    }
+  },
+  "include": [
+    "src"
+  ]
+}

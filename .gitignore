@@ -1,0 +1,11 @@
+node_modules
+dist
+coverage
+.env
+.env.local
+.turbo
+*.log
+apps/desktop/src-tauri/target
+apps/desktop/src-tauri/gen
+apps/desktop/.vite
+

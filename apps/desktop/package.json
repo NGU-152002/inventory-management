@@ -1,0 +1,30 @@
+{
+  "name": "@inventory-management/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -p tsconfig.json && vite build",
+    "check": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@inventory-management/shared": "0.1.0",
+    "@tauri-apps/api": "^2.8.0",
+    "@tauri-apps/plugin-sql": "^2.3.0",
+    "@tanstack/react-query": "^5.83.0",
+    "@tanstack/react-router": "^1.131.40",
+    "@tanstack/react-table": "^8.21.3",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react": "^5.0.0",
+    "typescript": "^5.9.2",
+    "vite": "^7.0.4"
+  }
+}
+
