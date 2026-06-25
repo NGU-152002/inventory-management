@@ -1,4 +1,4 @@
-import { createRootRoute, createRoute, createRouter, redirect } from "@tanstack/react-router";
+import { createMemoryHistory, createRootRoute, createRoute, createRouter, Outlet, redirect } from "@tanstack/react-router";
 import { AppShell } from "../components/AppShell";
 import { DashboardPage } from "../features/dashboard/DashboardPage";
 import { InventoryPage } from "../features/inventory/InventoryPage";
@@ -7,77 +7,106 @@ import { ProductionPage } from "../features/production/ProductionPage";
 import { SalesPage } from "../features/sales/SalesPage";
 import { WastePage } from "../features/waste/WastePage";
 import { LoginPage } from "../features/auth/LoginPage";
-import { getToken } from "../shared/auth/session";
-
-const requireAuth = () => {
-  if (!getToken()) {
-    throw redirect({ to: "/login" });
-  }
-};
+import { hasSession, validateSession } from "../shared/auth/session";
 
 const rootRoute = createRootRoute({
-  component: () => <AppShell />
+  component: Outlet
 });
 
-const dashboardRoute = createRoute({
+const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
-  beforeLoad: requireAuth,
-  component: DashboardPage
-});
-
-const inventoryRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/inventory",
-  beforeLoad: requireAuth,
-  component: InventoryPage
-});
-
-const purchasesRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/purchases",
-  beforeLoad: requireAuth,
-  component: PurchasesPage
-});
-
-const productionRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/production",
-  beforeLoad: requireAuth,
-  component: ProductionPage
-});
-
-const salesRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/sales",
-  beforeLoad: requireAuth,
-  component: SalesPage
-});
-
-const wasteRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/waste",
-  beforeLoad: requireAuth,
-  component: WastePage
+  beforeLoad: async () => {
+    const session = await validateSession();
+    throw redirect({ to: session ? "/dashboard" : "/login" });
+  }
 });
 
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/login",
+  beforeLoad: async () => {
+    if (!hasSession()) {
+      return;
+    }
+
+    const session = await validateSession();
+    if (session) {
+      throw redirect({ to: "/dashboard" });
+    }
+  },
   component: LoginPage
 });
 
+const appRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  id: "app",
+  beforeLoad: async () => {
+    const session = await validateSession();
+    if (!session) {
+      throw redirect({ to: "/login" });
+    }
+  },
+  component: AppShell
+});
+
+const dashboardRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/dashboard",
+  component: DashboardPage
+});
+
+const inventoryRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/inventory",
+  component: InventoryPage
+});
+
+const purchasesRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/purchases",
+  component: PurchasesPage
+});
+
+const productionRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/production",
+  component: ProductionPage
+});
+
+const salesRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/sales",
+  component: SalesPage
+});
+
+const wasteRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/waste",
+  component: WastePage
+});
+
 const routeTree = rootRoute.addChildren([
-  dashboardRoute,
-  inventoryRoute,
-  purchasesRoute,
-  productionRoute,
-  salesRoute,
-  wasteRoute,
-  loginRoute
+  indexRoute,
+  loginRoute,
+  appRoute.addChildren([
+    dashboardRoute,
+    inventoryRoute,
+    purchasesRoute,
+    productionRoute,
+    salesRoute,
+    wasteRoute
+  ])
 ]);
 
-export const router = createRouter({
-  routeTree,
-  defaultPreload: "intent"
-});
+export function createAppRouter(initialPath = "/") {
+  return createRouter({
+    routeTree,
+    defaultPreload: "intent",
+    history: createMemoryHistory({
+      initialEntries: [initialPath]
+    })
+  });
+}
+
+export const router = createAppRouter();

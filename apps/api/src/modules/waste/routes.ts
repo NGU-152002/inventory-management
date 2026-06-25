@@ -8,7 +8,7 @@ export async function wasteRoutes(app: FastifyInstance, inventory: InventoryModu
     const waste = wasteSchema.parse(request.body);
 
     try {
-      const result = await inventory.recordWaste.execute(waste, request.userContext.id);
+      const result = await inventory.recordWaste.execute(waste, request.userContext._id);
       return reply.code(201).send(result);
     } catch (error) {
       const mapped = mapInventoryError(error);

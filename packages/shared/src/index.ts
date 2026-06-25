@@ -15,20 +15,27 @@ export const stockMovementKinds = [
 export type Unit = (typeof units)[number];
 export type StockMovementKind = (typeof stockMovementKinds)[number];
 
+const timestampFields = {
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional()
+};
+
 export const roleSchema = z.enum(["owner", "branch_manager", "inventory_staff", "baker", "cashier"]);
 
 export const branchSchema = z.object({
-  id: z.string(),
+  _id: z.string(),
   name: z.string(),
-  code: z.string()
+  code: z.string(),
+  ...timestampFields
 });
 
 export const userSchema = z.object({
-  id: z.string(),
+  _id: z.string(),
   email: z.email(),
   name: z.string(),
   role: roleSchema,
-  branchIds: z.array(z.string())
+  branchIds: z.array(z.string()),
+  ...timestampFields
 });
 
 export const authSessionSchema = z.object({
@@ -39,7 +46,7 @@ export const authSessionSchema = z.object({
 });
 
 export const itemSchema = z.object({
-  id: z.string().optional(),
+  _id: z.string().optional(),
   name: z.string().min(1),
   sku: z.string().min(1),
   category: z.string().min(1),
@@ -47,16 +54,18 @@ export const itemSchema = z.object({
   reorderLevel: z.number().nonnegative(),
   costPerUnit: z.number().nonnegative(),
   supplierId: z.string().optional(),
-  perishable: z.boolean().default(false)
+  perishable: z.boolean().default(false),
+  ...timestampFields
 });
 
 export const supplierSchema = z.object({
-  id: z.string().optional(),
+  _id: z.string().optional(),
   name: z.string().min(1),
   contactName: z.string().min(1),
   phone: z.string().min(1),
   email: z.email().optional(),
-  address: z.string().min(1)
+  address: z.string().min(1),
+  ...timestampFields
 });
 
 export const purchaseReceiptLineSchema = z.object({
@@ -72,7 +81,8 @@ export const purchaseReceiptSchema = z.object({
   supplierId: z.string(),
   invoiceNumber: z.string().min(1),
   receivedAt: z.string(),
-  lines: z.array(purchaseReceiptLineSchema).min(1)
+  lines: z.array(purchaseReceiptLineSchema).min(1),
+  ...timestampFields
 });
 
 export const recipeLineSchema = z.object({
@@ -92,7 +102,8 @@ export const productionOrderSchema = z.object({
   quantity: z.number().positive(),
   batchNumber: z.string().min(1),
   expiryDate: z.string().optional(),
-  recipe: recipeSchema
+  recipe: recipeSchema,
+  ...timestampFields
 });
 
 export const saleLineSchema = z.object({
@@ -105,7 +116,8 @@ export const saleLineSchema = z.object({
 export const saleSchema = z.object({
   branchId: z.string(),
   soldAt: z.string(),
-  lines: z.array(saleLineSchema).min(1)
+  lines: z.array(saleLineSchema).min(1),
+  ...timestampFields
 });
 
 export const wasteSchema = z.object({
@@ -114,7 +126,8 @@ export const wasteSchema = z.object({
   quantity: z.number().positive(),
   batchNumber: z.string().optional(),
   reason: z.enum(["expired", "damaged", "spoilage", "production_error", "overproduction", "loss"]),
-  stockType: z.enum(["raw_material", "finished_good"])
+  stockType: z.enum(["raw_material", "finished_good"]),
+  ...timestampFields
 });
 
 export const stockLedgerEntrySchema = z.object({
@@ -126,7 +139,8 @@ export const stockLedgerEntrySchema = z.object({
   movementKind: z.enum(stockMovementKinds),
   referenceId: z.string(),
   occurredAt: z.string(),
-  userId: z.string()
+  userId: z.string(),
+  ...timestampFields
 });
 
 export const inventoryBalanceSchema = z.object({
@@ -135,7 +149,8 @@ export const inventoryBalanceSchema = z.object({
   batchNumber: z.string().optional(),
   quantity: z.number(),
   averageCost: z.number().nonnegative(),
-  expiryDate: z.string().optional()
+  expiryDate: z.string().optional(),
+  ...timestampFields
 });
 
 export const dashboardSummarySchema = z.object({

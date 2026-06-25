@@ -23,6 +23,10 @@ import type {
 } from "../../../core/application/inventory/ports.js";
 import type { StockBalanceKey } from "../../../core/domain/inventory/index.js";
 
+function nowIso() {
+  return new Date().toISOString();
+}
+
 class MongoInventoryBalanceRepository implements InventoryBalanceRepository {
   constructor(private readonly session?: ClientSession) {}
 
@@ -33,13 +37,23 @@ class MongoInventoryBalanceRepository implements InventoryBalanceRepository {
   }
 
   async upsert(balance: InventoryBalance) {
+    const timestamp = nowIso();
+
     await this.collection.updateOne(
       {
         branchId: balance.branchId,
         itemId: balance.itemId,
         batchNumber: balance.batchNumber
       },
-      { $set: balance },
+      {
+        $set: {
+          ...balance,
+          updatedAt: timestamp
+        },
+        $setOnInsert: {
+          createdAt: timestamp
+        }
+      },
       { upsert: true, session: this.session }
     );
   }
@@ -55,10 +69,14 @@ class MongoStockLedgerRepository implements StockLedgerRepository {
   private readonly collection = database.collection<StockLedgerEntry>("stock_ledger");
 
   async insert(entry: StockLedgerEntry) {
+    const timestamp = nowIso();
+
     await this.collection.insertOne(
       {
         ...entry,
-        referenceId: entry.referenceId || new ObjectId().toHexString()
+        referenceId: entry.referenceId || new ObjectId().toHexString(),
+        createdAt: timestamp,
+        updatedAt: timestamp
       },
       { session: this.session }
     );
@@ -71,7 +89,15 @@ class MongoGoodsReceiptRepository implements GoodsReceiptRepository {
   private readonly collection = database.collection("goods_receipts");
 
   async create(receipt: PurchaseReceiptInput) {
-    const inserted = await this.collection.insertOne(receipt, { session: this.session });
+    const timestamp = nowIso();
+    const inserted = await this.collection.insertOne(
+      {
+        ...receipt,
+        createdAt: timestamp,
+        updatedAt: timestamp
+      },
+      { session: this.session }
+    );
     return inserted.insertedId.toHexString();
   }
 }
@@ -82,7 +108,15 @@ class MongoProductionOrderRepository implements ProductionOrderRepository {
   private readonly collection = database.collection("production_orders");
 
   async create(order: ProductionOrderInput & { status: string }) {
-    const inserted = await this.collection.insertOne(order, { session: this.session });
+    const timestamp = nowIso();
+    const inserted = await this.collection.insertOne(
+      {
+        ...order,
+        createdAt: timestamp,
+        updatedAt: timestamp
+      },
+      { session: this.session }
+    );
     return inserted.insertedId.toHexString();
   }
 }
@@ -93,7 +127,15 @@ class MongoSalesRepository implements SalesRepository {
   private readonly collection = database.collection("sales");
 
   async create(sale: SaleInput) {
-    const inserted = await this.collection.insertOne(sale, { session: this.session });
+    const timestamp = nowIso();
+    const inserted = await this.collection.insertOne(
+      {
+        ...sale,
+        createdAt: timestamp,
+        updatedAt: timestamp
+      },
+      { session: this.session }
+    );
     return inserted.insertedId.toHexString();
   }
 }
@@ -104,7 +146,15 @@ class MongoWasteRepository implements WasteRepository {
   private readonly collection = database.collection("waste_entries");
 
   async create(entry: WasteInput) {
-    const inserted = await this.collection.insertOne(entry, { session: this.session });
+    const timestamp = nowIso();
+    const inserted = await this.collection.insertOne(
+      {
+        ...entry,
+        createdAt: timestamp,
+        updatedAt: timestamp
+      },
+      { session: this.session }
+    );
     return inserted.insertedId.toHexString();
   }
 }

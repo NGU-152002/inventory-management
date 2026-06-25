@@ -2,7 +2,7 @@ import type { FastifyInstance } from "fastify";
 import bcrypt from "bcryptjs";
 import { authSessionSchema, userSchema } from "@inventory-management/shared";
 import { z } from "zod";
-import { findBranchesByIds, findUserByEmail, findUserById } from "./store.js";
+import { createSessionId, findBranchesByIds, findUserByEmail, findUserById, revokeSession, toPublicUser } from "./store.js";
 
 const loginSchema = z.object({
   email: z.email(),
@@ -23,19 +23,15 @@ export async function authRoutes(app: FastifyInstance) {
       return reply.code(401).send({ message: "Invalid credentials" });
     }
 
-    const safeUser = userSchema.parse({
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role,
-      branchIds: user.branchIds
-    });
+    const safeUser = userSchema.parse(toPublicUser(user));
     const branches = await findBranchesByIds(safeUser.branchIds);
-    const activeBranchId = branches[0]?.id ?? safeUser.branchIds[0] ?? "";
+    const activeBranchId = branches[0]?._id ?? safeUser.branchIds[0] ?? "";
+    const sessionId = createSessionId();
 
     const token = await reply.jwtSign({
       ...safeUser,
-      activeBranchId
+      activeBranchId,
+      sessionId
     });
 
     return authSessionSchema.parse({
@@ -46,21 +42,23 @@ export async function authRoutes(app: FastifyInstance) {
     });
   });
 
+  app.post("/logout", { preHandler: [app.authenticate] }, async (request) => {
+    if (request.userContext.sessionId) {
+      await revokeSession(request.userContext.sessionId, request.userContext._id);
+    }
+
+    return { success: true };
+  });
+
   app.get("/me", { preHandler: [app.authenticate] }, async (request, reply) => {
-    const user = await findUserById(request.userContext.id);
+    const user = await findUserById(request.userContext._id);
     if (!user) {
       return reply.code(404).send({ message: "User not found" });
     }
 
-    const safeUser = userSchema.parse({
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role,
-      branchIds: user.branchIds
-    });
+    const safeUser = userSchema.parse(toPublicUser(user));
     const branches = await findBranchesByIds(safeUser.branchIds);
-    const activeBranchId = request.userContext.activeBranchId ?? branches[0]?.id ?? safeUser.branchIds[0] ?? "";
+    const activeBranchId = request.userContext.activeBranchId ?? branches[0]?._id ?? safeUser.branchIds[0] ?? "";
 
     return authSessionSchema.parse({
       token: "",
