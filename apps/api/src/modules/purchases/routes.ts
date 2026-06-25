@@ -8,7 +8,7 @@ export async function purchaseRoutes(app: FastifyInstance, inventory: InventoryM
     const receipt = purchaseReceiptSchema.parse(request.body);
 
     try {
-      const result = await inventory.receiveGoods.execute(receipt, request.userContext.id);
+      const result = await inventory.receiveGoods.execute(receipt, request.userContext._id);
       return reply.code(201).send(result);
     } catch (error) {
       const mapped = mapInventoryError(error);

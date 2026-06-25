@@ -19,7 +19,7 @@ export function LoginPage() {
         body: JSON.stringify({ email, password })
       });
       setSession(response);
-      navigate({ to: "/" });
+      navigate({ to: "/dashboard" });
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Login failed");
     }
